@@ -1,5 +1,5 @@
-const TodoList = artifacts.require("./TodoList.sol");
+const PatientLedger = artifacts.require("./PatientLedger.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(TodoList);
+  deployer.deploy(PatientLedger);
 };
