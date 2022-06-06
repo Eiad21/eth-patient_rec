@@ -5,29 +5,31 @@ contract PatientLedger{
     uint public infoCount = 0;
 
     constructor() public {
-        createPatientRecord("Btngana Kbeera", true, 24, 42, 5, 1000);
+        createPatientRecord(2,3,"Btngana Kbeera", "true", "24", "42", "5", "1000");
     }
 
     struct PatientRecord{
         uint patientId;
+        uint myPrevRecord;
         string name;
-        bool sex;
-        uint height;
-        uint weight;
-        uint age;
-        uint bloodPressure;
+        string sex;
+        string height;
+        string weight;
+        string age;
+        string bloodPressure;
     }
 
 
     mapping (uint => PatientRecord) public patientRecords;
 
-    function createPatientRecord(string memory _name, 
-        bool _sex, uint _height, uint _weight,
-        uint _age, uint _bloodPressure) public {
+    function createPatientRecord(uint _patientId, uint _myPrevRecord, 
+    string memory _name, string memory _sex, string memory _height, 
+    string memory _weight, string memory _age, string memory _bloodPressure) 
+    public {
         
         infoCount++;
-        patientRecords[infoCount] = PatientRecord(infoCount, _name, _sex, _height, 
-                                        _weight, _age, _bloodPressure);
+        patientRecords[infoCount] = PatientRecord(_patientId, _myPrevRecord, 
+        _name, _sex, _height, _weight, _age, _bloodPressure);
 
         // emit TaskCreated(taskCount, _content, false);
     }

@@ -1,3 +1,56 @@
+// const { CryptoJS } = require('node-cryptojs-aes');
+
+function compress(string, key) {
+  string = unescape(encodeURIComponent(string));
+  var newString = '',
+    char, nextChar, combinedCharCode;
+  for (var i = 0; i < string.length; i += 2) {
+    char = string.charCodeAt(i);
+
+    if ((i + 1) < string.length) {
+
+      
+      nextChar = string.charCodeAt(i + 1) - 31;
+      key+=1
+      
+      combinedCharCode = char + "" + nextChar.toLocaleString('en', {
+        minimumIntegerDigits: 2
+      });
+
+      newString += String.fromCharCode(parseInt(combinedCharCode, 10));
+
+    } else {
+
+     
+      newString += string.charAt(i);
+    }
+  }
+  return btoa(unescape(encodeURIComponent(newString)));
+}
+
+
+function decompress(string, key) {
+
+  var newString = '',
+    char, codeStr, firstCharCode, lastCharCode;
+  string = decodeURIComponent(escape(atob(string)));
+  for (var i = 0; i < string.length; i++) {
+    char = string.charCodeAt(i);
+    if (char > 132) {
+      codeStr = char.toString(10);
+
+      firstCharCode = parseInt(codeStr.substring(0, codeStr.length - 2), 10);
+      key+=1
+      lastCharCode = parseInt(codeStr.substring(codeStr.length - 2, codeStr.length), 10) + 31;
+
+      newString += String.fromCharCode(firstCharCode) + String.fromCharCode(lastCharCode);
+    } else {
+      newString += string.charAt(i);
+    }
+  }
+  return newString;
+}
+
 App = {
     loading: false,
     contracts: {},
@@ -11,9 +64,9 @@ App = {
   
     // https://medium.com/metamask/https-medium-com-metamask-breaking-change-injecting-web3-7722797916a8
     loadWeb3: async () => {
+      // const CryptoJS = require('crypto-js')
       const Web3 = require('web3');
-      // x = Web3.encrypt("btts", "btts")
-      // console.log(x);
+
       if (typeof web3 !== 'undefined') {
         App.web3Provider = web3.currentProvider
         web3 = new Web3(web3.currentProvider)
@@ -49,16 +102,17 @@ App = {
       // Set the current blockchain account
       App.account = web3.eth.accounts[0]
       web3.eth.defaultAccount = App.account;
+      console.log(App.account)
     },
 
     loadContract: async () => {
       // Create a JavaScript version of the smart contract
-      const todoList = await $.getJSON('TodoList.json')
-      App.contracts.TodoList = TruffleContract(todoList)
-      App.contracts.TodoList.setProvider(App.web3Provider)
+      const patientLedger = await $.getJSON('PatientLedger.json')
+      App.contracts.PatientLedger = TruffleContract(patientLedger)
+      App.contracts.PatientLedger.setProvider(App.web3Provider)
   
       // Hydrate the smart contract with values from the blockchain
-      App.todoList = await App.contracts.TodoList.deployed()
+      App.patientLedger = await App.contracts.PatientLedger.deployed()
     },
 
     render: async() =>{
@@ -74,70 +128,91 @@ App = {
       $('#account').html(App.account)
 
       // Render Tasks
-      await App.renderTasks()
+      await App.renderRecords()
 
       // Update loading state
       App.setLoading(false)
 
     },
 
-    createTask: async () =>{
-      // var node_cryptojs = require('node-cryptojs-aes');
-      // var CryptoJS = node_cryptojs.CryptoJS;
+    createRecord: async () =>{
 
       App.setLoading(true)
+
+      // INIT
+      var password = "myPassword";
+
+      // RETRIEVE VALUES
+      
+      const patiendId = $('#patiendId').val()
       const name = $('#name').val()
       const sex = $('#sex').is(':checked')
       const height = $('#height').val()
       const weight = $('#weight').val()
       const age = $('#age').val()
       const bloodPressure = $('#bloodpressure').val()
+      
+      // PROCESS
+      var nameE = CryptoJS.AES.encrypt(name, password).toString();
+      var sexE = CryptoJS.AES.encrypt(sex, password).toString();
+      var heightE = CryptoJS.AES.encrypt(height, password).toString();
+      var weightE = CryptoJS.AES.encrypt(weight, password).toString();
+      var ageE = CryptoJS.AES.encrypt(age, password).toString();
+      var bloodPressureE = CryptoJS.AES.encrypt(bloodPressure, password).toString();
 
-      // var encrypted = CryptoJS.AES.encrypt(age, "doctorstone");
-      // var decrypted = CryptoJS.AES.decrypt(encrypted, "doctorstone");
+      console.log("patient ID: ",patiendId)
+      console.log("name: ",nameE)
+      console.log("sex: ",sexE)
+      console.log("height: ",heightE)
+      console.log("weight: ",weightE)
+      console.log("age: ",ageE)
+      console.log("bloodPressure: ",bloodPressureE)
+      
+      
+      // GET PREVIOUS
+      var prev = -1
 
-      // console.log("name: ",name)
-      // console.log("sex: ",sex)
-      // console.log("height: ",height)
-      // console.log("weight: ",weight)
-      // console.log("age: ",age)
-      // console.log("bloodPressure: ",bloodPressure)
-      // console.log("ageE", encrypted)
-      // console.log("ageC", decrypted)
-      // await App.todoList.createTask(content)
-      // window.location.reload()
+      
+      await App.patientLedger.createPatientRecord(patiendId, prev, nameE, sexE, heightE, weightE, ageE, bloodPressureE)
+      window.location.reload()
     },
 
-    renderTasks: async () => {
+    renderRecords: async () => {
       // Load the total task count from the blockchain
-      const taskCount = await App.todoList.taskCount()
-      const $taskTemplate = $('.taskTemplate')
+      const patientCount = await App.patientLedger.infoCount()
+      const $patientTemplate = $('.patientTemplate')
   
       // Render out each task with a new task template
-      for (var i = 1; i <= taskCount; i++) {
+      for (var i = 1; i <= patientCount; i++) {
         // Fetch the task data from the blockchain
-        const task = await App.todoList.tasks(i)
-        const taskId = task[0].toNumber()
-        const taskContent = task[1]
-        const taskCompleted = task[2]
+        // TODO: remove todo
+        const patRec = await App.patientLedger.patientRecords(i)
+        
+        const pID = patRec[0].toNumber()
+        const pPrev = patRec[1]
+        const pName = patRec[2]
+        const pSex = patRec[3]
+        const pHeight = patRec[4]
+        const pWeight = patRec[5]
+        const pAge = patRec[6]
+        const pBloodPressure = patRec[7]
   
         // Create the html for the task
-        const $newTaskTemplate = $taskTemplate.clone()
-        $newTaskTemplate.find('.content').html(taskContent)
-        $newTaskTemplate.find('input')
-                        .prop('name', taskId)
-                        .prop('checked', taskCompleted)
+        const $newPatientTemplate = $patientTemplate.clone()
+        $newPatientTemplate.find('.pID').html(pID)
+        $newPatientTemplate.find('.pName').html(pName)
+        $newPatientTemplate.find('.pSex').html(pSex)
+        $newPatientTemplate.find('.pHeight').html(pHeight)
+        $newPatientTemplate.find('.pWeight').html(pWeight)
+        $newPatientTemplate.find('.pAge').html(pAge)
+        $newPatientTemplate.find('.pBloodPressure').html(pBloodPressure)
                         // .on('click', App.toggleCompleted)
   
         // Put the task in the correct list
-        if (taskCompleted) {
-          $('#completedTaskList').append($newTaskTemplate)
-        } else {
-          $('#taskList').append($newTaskTemplate)
-        }
+        $('#patientList').append($newPatientTemplate)
   
         // Show the task
-        $newTaskTemplate.show()
+        $newPatientTemplate.show()
       }
     },
 

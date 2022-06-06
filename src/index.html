@@ -57,7 +57,10 @@
             <p class="text-center">Loading...</p>
           </div>
           <div id="content">
-            <form onSubmit="App.createTask(); return false;">
+
+            <h2>Add Patient Record</h2>
+            <form onSubmit="App.createRecord(); return false;">
+              <input id="patiendId" type="text" class="form-control" placeholder="Patient ID" required>
               <input id="name" type="text" class="form-control" placeholder="Patient name" required>
               <input id="height" type="number" class="form-control" placeholder="Height" required>
               <input id="weight" type="number" class="form-control" placeholder="Weight" required>
@@ -67,12 +70,28 @@
               <label for="sex"> I am a male</label><br>
               <input type="submit" hidden="">
             </form>
-            <ul id="taskList" class="list-unstyled">
-              <div class="taskTemplate" class="checkbox" style="display: none">
+
+            <h2>Retrieve Patient</h2>
+            <form onSubmit="App.retrievePatient(); return false;">
+              <input id="IdRet" type="text" class="form-control" placeholder="Patient ID" required>
+              <input id="KeyRet" type="text" class="form-control" placeholder="Patient Key" required>
+              <input type="submit" hidden="">
+            </form>
+
+            <h2>Patient Records</h2>
+            <ul id="patientList" class="list-unstyled">
+              <div class="patientTemplate" class="checkbox" style="display: none">
+                <span>------------------------------------------------</span></br>
                 <label>
-                  <input type="checkbox" />
-                  <span class="content">Task content goes here...</span>
+                  ID: <span class="pID">Patient ID goes here...</span>
+                  Name: <span class="pName">Name goes here...</span>
+                  Male: <span class="pSex">Sex goes here...</span> </br>
+                  Height: <span class="pHeight">Height goes here...</span>
+                  Weight: <span class="pWeight">Weight goes here...</span> </br>
+                  Age: <span class="pAge">Age goes here...</span>
+                  Blood Pressure: <span class="pBloodPressure">Blood Pressure goes here...</span>
                 </label>
+              </br><span>------------------------------------------------</span>
               </div>
             </ul>
             <ul id="completedTaskList" class="list-unstyled">
@@ -86,11 +105,19 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="vendor/web3/dist/web3.min.js"></script>
-    <script type="text/javascript" src="vendor/validator/validator.min.js"></script>
     <!-- <script src="vendor/node-cryptojs-aes/cryptojs.js"></script> -->
-    <script src="vendor/crypto-js/crypto-js.js"></script>
-    <script src="vendor/node-cryptojs-aes/client/aes.js"></script>
+    <!-- <script src="vendor/crypto-js/crypto-js.js"></script> -->
+    <script src="vendor/node-cryptojs-aes/client/aes.js">
+      // import node-cryptojs-aes modules to encrypt or decrypt data
+      var node_cryptojs = require('node-cryptojs-aes');
+      
+      // node-cryptojs-aes main object;
+      var CryptoJS = node_cryptojs.CryptoJS;
+    </script>
     <script src="vendor/node-cryptojs-aes/client/jsonformatter.js"></script>
+    <!-- <script type="text/javascript" src="vendor/crypto-js/crypto-js.js">
+      const crypto = require('crypto-js');
+    </script> -->
     <script src="vendor/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="vendor/truffle-contract/dist/truffle-contract.js"></script>
     <script src="app.js"></script>
