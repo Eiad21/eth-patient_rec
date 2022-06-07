@@ -64,7 +64,7 @@ App = {
   
     // https://medium.com/metamask/https-medium-com-metamask-breaking-change-injecting-web3-7722797916a8
     loadWeb3: async () => {
-      // const CryptoJS = require('crypto-js')
+
       const Web3 = require('web3');
 
       if (typeof web3 !== 'undefined') {
@@ -128,55 +128,222 @@ App = {
       $('#account').html(App.account)
 
       // Render Tasks
-      await App.renderRecords()
+      // await App.renderRecords()
 
       // Update loading state
       App.setLoading(false)
 
     },
 
-    createRecord: async () =>{
+    createPatient: async () =>{
 
       App.setLoading(true)
 
-      // INIT
-      var password = "myPassword";
-
       // RETRIEVE VALUES
       
-      const patiendId = $('#patiendId').val()
+      const patientId = $('#patientIdPatient').val()
+
+      myPrev = await App.findMyPrev(patientId)
+      
+      if(myPrev != 0){
+        window.alert("A patient record already exists")
+        window.location.reload()
+        return
+      }
+
       const name = $('#name').val()
-      const sex = $('#sex').is(':checked')
       const height = $('#height').val()
       const weight = $('#weight').val()
-      const age = $('#age').val()
-      const bloodPressure = $('#bloodpressure').val()
+      const age = $('#agePatient').val()
+      const patientKey = $('#patientKeyPatient').val()
       
       // PROCESS
-      var nameE = CryptoJS.AES.encrypt(name, password).toString();
-      var sexE = CryptoJS.AES.encrypt(sex, password).toString();
-      var heightE = CryptoJS.AES.encrypt(height, password).toString();
-      var weightE = CryptoJS.AES.encrypt(weight, password).toString();
-      var ageE = CryptoJS.AES.encrypt(age, password).toString();
-      var bloodPressureE = CryptoJS.AES.encrypt(bloodPressure, password).toString();
+      var nameE = CryptoJS.AES.encrypt(name, patientKey).toString();
+      var heightE = CryptoJS.AES.encrypt(height, patientKey).toString();
+      var weightE = CryptoJS.AES.encrypt(weight, patientKey).toString();
+      var ageE = CryptoJS.AES.encrypt(age, patientKey).toString();
 
-      console.log("patient ID: ",patiendId)
+      console.log("ADDED PATIENT")
+      console.log("patient ID: ",patientId)
+      console.log("Prev: ",myPrev)
       console.log("name: ",nameE)
-      console.log("sex: ",sexE)
       console.log("height: ",heightE)
       console.log("weight: ",weightE)
       console.log("age: ",ageE)
-      console.log("bloodPressure: ",bloodPressureE)
-      
-      
-      // GET PREVIOUS
-      var prev = -1
 
       
-      await App.patientLedger.createPatientRecord(patiendId, prev, nameE, sexE, heightE, weightE, ageE, bloodPressureE)
+      await App.patientLedger.createRecord(patientId, myPrev, nameE, heightE, weightE, ageE)
       window.location.reload()
     },
 
+    createVisit: async () =>{
+
+      App.setLoading(true)
+
+      // RETRIEVE VALUES
+      
+      const patientId = $('#patientIdVisit').val()
+
+      myPrev = await App.findMyPrev(patientId)
+      console.log(myPrev)
+      if(myPrev === 0){
+        window.alert("This patient is not registered")
+        window.location.reload()
+        return
+      }
+
+      const age = $('#ageVisit').val()
+      const bloodPressure = $('#bloodPressure').val()
+      const pulse = $('#pulse').val()
+      const glucose = $('#glucose').val()
+      const patientKey = $('#patientKeyVisit').val()
+
+      // PROCESS
+      var ageE = CryptoJS.AES.encrypt(age, patientKey).toString();
+      var bloodPressureE = CryptoJS.AES.encrypt(bloodPressure, patientKey).toString();
+      var pulseE = CryptoJS.AES.encrypt(pulse, patientKey).toString();
+      var glucoseE = CryptoJS.AES.encrypt(glucose, patientKey).toString();
+
+      console.log("ADDED VISIT")
+      console.log("patient ID: ",patientId)
+      console.log("Prev: ",myPrev)
+      console.log("age: ",ageE)
+      console.log("bloodPressure: ",bloodPressureE)
+      console.log("pulse: ",pulseE)
+      console.log("glucose: ",glucoseE)
+
+      
+      await App.patientLedger.createRecord(patientId, myPrev, bloodPressureE, pulseE, glucoseE, ageE)
+      window.location.reload()
+    },
+
+    retrievePatients: async () =>{
+      const patientId = $('#IdRet').val()
+      const patientKey = $('#KeyRet').val()
+      myPrev = await App.findMyPrev(patientId)
+
+      const $patientTemplate = $('.patientTemplate').last()
+      const $visitTemplate = $('.visitTemplate').last()
+      $('#patientList').empty()
+      $('#visitList').empty()
+      while(myPrev> 0){
+        const patRec = await App.patientLedger.patientRecords(myPrev)
+
+        // GET DATA EL RAGEL
+        const pID = patRec[0].toNumber()
+        const pPrev = patRec[1].toNumber()
+        const pName_BloodPressure = patRec[2]
+        const pHeight_Pulse = patRec[3]
+        const pWeight_Glucose = patRec[4]
+        const pAge = patRec[5]        
+
+        // EL RAGEL DA PATIENT RECORD
+        if(pPrev == 0){
+
+          console.log("Retrieving patient data")
+
+          // GET BYTES EL RAGEL
+          const nameByte = CryptoJS.AES.decrypt(pName_BloodPressure, patientKey);
+          const heightByte = CryptoJS.AES.decrypt(pHeight_Pulse, patientKey);
+          const weightByte = CryptoJS.AES.decrypt(pWeight_Glucose, patientKey);
+          const ageByte = CryptoJS.AES.decrypt(pAge, patientKey);
+
+          // DECRYPT EL RAGEL
+
+          try{
+            var nameDec = nameByte.toString(CryptoJS.enc.Utf8);
+            var heightDec = heightByte.toString(CryptoJS.enc.Utf8);
+            var weightDec = weightByte.toString(CryptoJS.enc.Utf8);
+            var ageDec = ageByte.toString(CryptoJS.enc.Utf8);
+          }catch(e){
+            window.alert("Coudln't retrieve data")
+            window.location.reload()
+            return
+          }
+          
+
+          // CREATE HTML FOR EL RAGEL
+          $patientTemplate.find('.pID').html(pID)
+          $patientTemplate.find('.pPrev').html(pPrev)
+          $patientTemplate.find('.pName').html(nameDec)
+          $patientTemplate.find('.pHeight').html(heightDec)
+          $patientTemplate.find('.pWeight').html(weightDec)
+          $patientTemplate.find('.pAge').html(ageDec)
+
+          $('#patientList').append($patientTemplate)
+          $patientTemplate.show()
+        }
+
+        // EL RAGEL DA VISIT
+        else{
+
+          console.log("Retrieving visit data")
+          // GET BYTES EL RAGEL
+          const bloodPressureByte = CryptoJS.AES.decrypt(pName_BloodPressure, patientKey);
+          const pulseByte = CryptoJS.AES.decrypt(pHeight_Pulse, patientKey);
+          const glucoseByte = CryptoJS.AES.decrypt(pWeight_Glucose, patientKey);
+          const ageByte = CryptoJS.AES.decrypt(pAge, patientKey);
+
+          // DECRYPT EL RAGEL
+          // var bloodPressureDec = null
+          // var pulseDec = null
+          // var glucoseDec = null
+          // var ageDec = null
+          try{
+            var bloodPressureDec = bloodPressureByte.toString(CryptoJS.enc.Utf8);
+            var pulseDec = pulseByte.toString(CryptoJS.enc.Utf8);
+            var glucoseDec = glucoseByte.toString(CryptoJS.enc.Utf8);
+            var ageDec = ageByte.toString(CryptoJS.enc.Utf8);
+          }catch(e){
+            console.log("bttsya kbeera")
+            window.alert("Couldn't retrieve data")
+            window.location.reload()
+            return
+          }
+          
+
+          // CREATE HTML FOR EL RAGEL
+          const $newVisitTemplate = $visitTemplate.clone()
+
+          $newVisitTemplate.find('.pID').html(pID)
+          $newVisitTemplate.find('.pPrev').html(pPrev)
+          $newVisitTemplate.find('.pBloodPressure').html(bloodPressureDec)
+          $newVisitTemplate.find('.pPulse').html(pulseDec)
+          $newVisitTemplate.find('.pGlucose').html(glucoseDec)
+          $newVisitTemplate.find('.pAge').html(ageDec)
+
+          // PUT THE RAGEL IN THE LIST
+          $('#visitList').append($newVisitTemplate)
+
+          // SHOW THE RAGEL
+          $newVisitTemplate.class = "bttsya"
+          $newVisitTemplate.show()
+        }
+
+        myPrev = pPrev
+
+      }
+    },
+    findMyPrev: async (id) => {
+
+      const patientCount = await App.patientLedger.infoCount()
+      for (var i = patientCount; i > 0; i--) {
+
+        const patRec = await App.patientLedger.patientRecords(i)
+        const pID = patRec[0].toNumber()
+
+        if(pID == id){
+          if (typeof i === 'number'){
+            return i
+          }
+          else{
+            return i.toNumber()
+          }
+        }
+
+      }
+      return 0
+    },
     renderRecords: async () => {
       // Load the total task count from the blockchain
       const patientCount = await App.patientLedger.infoCount()
@@ -213,6 +380,7 @@ App = {
   
         // Show the task
         $newPatientTemplate.show()
+
       }
     },
 

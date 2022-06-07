@@ -43,7 +43,7 @@
   </head>
   <body>
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="http://www.dappuniversity.com/free-download" target="_blank">Dapp University | Todo List</a>
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#" target="_blank">EOAK | EHR BC</a>
       <ul class="navbar-nav px-3">
         <li class="nav-item text-nowrap d-none d-sm-none d-sm-block">
           <small><a class="nav-link" href="#"><span id="account"></span></a></small>
@@ -58,43 +58,65 @@
           </div>
           <div id="content">
 
-            <h2>Add Patient Record</h2>
-            <form onSubmit="App.createRecord(); return false;">
-              <input id="patiendId" type="text" class="form-control" placeholder="Patient ID" required>
+            <h2>Add New Patient</h2>
+            <form onSubmit="App.createPatient(); return false;">
+              <input id="patientIdPatient" type="text" class="form-control" placeholder="Patient ID" required>
               <input id="name" type="text" class="form-control" placeholder="Patient name" required>
               <input id="height" type="number" class="form-control" placeholder="Height" required>
               <input id="weight" type="number" class="form-control" placeholder="Weight" required>
-              <input id="age" type="number" class="form-control" placeholder="Age" required>
-              <input id="bloodpressure" type="number" class="form-control" placeholder="Blood pressure" required>
-              <input type="checkbox" id="sex" name="sex" >
-              <label for="sex"> I am a male</label><br>
+              <input id="agePatient" type="number" class="form-control" placeholder="Age" required>
+              <input id="patientKeyPatient" type="text" class="form-control" placeholder="Patient Key" required>
+              <input type="submit" hidden="">
+            </form>
+
+            <h2>Add Visit Information</h2>
+            <form onSubmit="App.createVisit(); return false;">
+              <input id="patientIdVisit" type="text" class="form-control" placeholder="Patient ID" required>
+              <input id="ageVisit" type="number" class="form-control" placeholder="Age" required>
+              <input id="bloodPressure" type="number" class="form-control" placeholder="Blood Pressure" required>
+              <input id="pulse" type="number" class="form-control" placeholder="Pulse" required>
+              <input id="glucose" type="number" class="form-control" placeholder="Glucose" required>
+              <input id="patientKeyVisit" type="text" class="form-control" placeholder="Patient Key" required>
               <input type="submit" hidden="">
             </form>
 
             <h2>Retrieve Patient</h2>
-            <form onSubmit="App.retrievePatient(); return false;">
+            <form onSubmit="App.retrievePatients(); return false;">
               <input id="IdRet" type="text" class="form-control" placeholder="Patient ID" required>
               <input id="KeyRet" type="text" class="form-control" placeholder="Patient Key" required>
               <input type="submit" hidden="">
             </form>
 
-            <h2>Patient Records</h2>
+            <h2>Patient Info</h2>
             <ul id="patientList" class="list-unstyled">
               <div class="patientTemplate" class="checkbox" style="display: none">
                 <span>------------------------------------------------</span></br>
                 <label>
                   ID: <span class="pID">Patient ID goes here...</span>
+                  PREV: <span class="pPrev">Patient Prev goes here...</span>
                   Name: <span class="pName">Name goes here...</span>
-                  Male: <span class="pSex">Sex goes here...</span> </br>
                   Height: <span class="pHeight">Height goes here...</span>
                   Weight: <span class="pWeight">Weight goes here...</span> </br>
                   Age: <span class="pAge">Age goes here...</span>
-                  Blood Pressure: <span class="pBloodPressure">Blood Pressure goes here...</span>
                 </label>
               </br><span>------------------------------------------------</span>
               </div>
             </ul>
-            <ul id="completedTaskList" class="list-unstyled">
+
+            <h2>Patient Visits Info</h2>
+            <ul id="visitList" class="list-unstyled">
+              <div class="visitTemplate" class="checkbox" style="display: none">
+                <span>------------------------------------------------</span></br>
+                <label>
+                  ID: <span class="pID">Patient ID goes here...</span>
+                  PREV: <span class="pPrev">Patient Prev goes here...</span>
+                  Age: <span class="pAge">Age goes here...</span>
+                  Blood Pressure: <span class="pBloodPressure">Blood Pressure goes here...</span> </br>
+                  Pulse: <span class="pPulse">Blood Pulse goes here...</span>
+                  Glucose: <span class="pGlucose">Blood Glucose goes here...</span>
+                </label>
+              </br><span>------------------------------------------------</span>
+              </div>
             </ul>
           </div>
         </main>
@@ -110,7 +132,6 @@
     <script src="vendor/node-cryptojs-aes/client/aes.js">
       // import node-cryptojs-aes modules to encrypt or decrypt data
       var node_cryptojs = require('node-cryptojs-aes');
-      
       // node-cryptojs-aes main object;
       var CryptoJS = node_cryptojs.CryptoJS;
     </script>
@@ -120,6 +141,7 @@
     </script> -->
     <script src="vendor/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="vendor/truffle-contract/dist/truffle-contract.js"></script>
+    <script type="text/javascript" src="patientMeta.json"></script>
     <script src="app.js"></script>
   </body>
 </html>
