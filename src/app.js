@@ -1,54 +1,23 @@
 // const { CryptoJS } = require('node-cryptojs-aes');
 
-function compress(string, key) {
-  string = unescape(encodeURIComponent(string));
-  var newString = '',
-    char, nextChar, combinedCharCode;
-  for (var i = 0; i < string.length; i += 2) {
-    char = string.charCodeAt(i);
-
-    if ((i + 1) < string.length) {
-
-      
-      nextChar = string.charCodeAt(i + 1) - 31;
-      key+=1
-      
-      combinedCharCode = char + "" + nextChar.toLocaleString('en', {
-        minimumIntegerDigits: 2
-      });
-
-      newString += String.fromCharCode(parseInt(combinedCharCode, 10));
-
-    } else {
-
-     
-      newString += string.charAt(i);
-    }
+function hashCode(string) {
+  var hash = 0, i, chr;
+  if (string.length === 0) return hash;
+  for (i = 0; i < string.length; i++) {
+    chr   = string.charCodeAt(i);
+    hash  = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
   }
-  return btoa(unescape(encodeURIComponent(newString)));
+  return hash;
+};
+
+function sign(message){
+  return hashCode(message)
 }
 
-
-function decompress(string, key) {
-
-  var newString = '',
-    char, codeStr, firstCharCode, lastCharCode;
-  string = decodeURIComponent(escape(atob(string)));
-  for (var i = 0; i < string.length; i++) {
-    char = string.charCodeAt(i);
-    if (char > 132) {
-      codeStr = char.toString(10);
-
-      firstCharCode = parseInt(codeStr.substring(0, codeStr.length - 2), 10);
-      key+=1
-      lastCharCode = parseInt(codeStr.substring(codeStr.length - 2, codeStr.length), 10) + 31;
-
-      newString += String.fromCharCode(firstCharCode) + String.fromCharCode(lastCharCode);
-    } else {
-      newString += string.charAt(i);
-    }
-  }
-  return newString;
+function verify(message, signature){
+  h = hashCode(message)
+  return (h == signature)
 }
 
 App = {
@@ -66,6 +35,9 @@ App = {
     loadWeb3: async () => {
 
       const Web3 = require('web3');
+      // const EncryptRsa = require('encrypt-rsa').default;
+      // const encryptRsa = new EncryptRsa();
+      // console.log(encryptRsa)
 
       if (typeof web3 !== 'undefined') {
         App.web3Provider = web3.currentProvider
@@ -157,12 +129,29 @@ App = {
       const age = $('#agePatient').val()
       const patientKey = $('#patientKeyPatient').val()
       
+      var message = name+height+weight+age
+
+      // const signatureKarim = await web3.eth.sign(App.account, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", console.log)
+      // console.log("Aho et. al",signatureKarim)
+      // console.log("Aho et. al tany",App.account)
+
+      const signature = sign(message).toString();
+
+      console.log("message ",message)
+      console.log("hash ",signature)
+
       // PROCESS
       var nameE = CryptoJS.AES.encrypt(name, patientKey).toString();
       var heightE = CryptoJS.AES.encrypt(height, patientKey).toString();
       var weightE = CryptoJS.AES.encrypt(weight, patientKey).toString();
       var ageE = CryptoJS.AES.encrypt(age, patientKey).toString();
-
+      var signatureE = CryptoJS.AES.encrypt(signature, patientKey).toString();
+      // var allParams = name+height+
+      // const signature = await web3.eth.sign(, App.account);
+      
+      await App.patientLedger.createRecord(patientId, myPrev, nameE, heightE, weightE, ageE, signatureE)
+      
+      
       console.log("ADDED PATIENT")
       console.log("patient ID: ",patientId)
       console.log("Prev: ",myPrev)
@@ -170,9 +159,8 @@ App = {
       console.log("height: ",heightE)
       console.log("weight: ",weightE)
       console.log("age: ",ageE)
+      console.log("signature: ",signatureE)
 
-      
-      await App.patientLedger.createRecord(patientId, myPrev, nameE, heightE, weightE, ageE)
       window.location.reload()
     },
 
@@ -198,11 +186,18 @@ App = {
       const glucose = $('#glucose').val()
       const patientKey = $('#patientKeyVisit').val()
 
+      var message = bloodPressure+pulse+glucose+age
+      const signature = sign(message).toString();
+
+      console.log("message ",message)
+      console.log("hash ",signature)
+
       // PROCESS
       var ageE = CryptoJS.AES.encrypt(age, patientKey).toString();
       var bloodPressureE = CryptoJS.AES.encrypt(bloodPressure, patientKey).toString();
       var pulseE = CryptoJS.AES.encrypt(pulse, patientKey).toString();
       var glucoseE = CryptoJS.AES.encrypt(glucose, patientKey).toString();
+      var signatureE = CryptoJS.AES.encrypt(signature, patientKey).toString();
 
       console.log("ADDED VISIT")
       console.log("patient ID: ",patientId)
@@ -211,9 +206,10 @@ App = {
       console.log("bloodPressure: ",bloodPressureE)
       console.log("pulse: ",pulseE)
       console.log("glucose: ",glucoseE)
+      console.log("signature: ",signatureE)
 
       
-      await App.patientLedger.createRecord(patientId, myPrev, bloodPressureE, pulseE, glucoseE, ageE)
+      await App.patientLedger.createRecord(patientId, myPrev, bloodPressureE, pulseE, glucoseE, ageE, signatureE)
       window.location.reload()
     },
 
@@ -235,7 +231,8 @@ App = {
         const pName_BloodPressure = patRec[2]
         const pHeight_Pulse = patRec[3]
         const pWeight_Glucose = patRec[4]
-        const pAge = patRec[5]        
+        const pAge = patRec[5]
+        const pSig = patRec[6]        
 
         // EL RAGEL DA PATIENT RECORD
         if(pPrev == 0){
@@ -247,6 +244,7 @@ App = {
           const heightByte = CryptoJS.AES.decrypt(pHeight_Pulse, patientKey);
           const weightByte = CryptoJS.AES.decrypt(pWeight_Glucose, patientKey);
           const ageByte = CryptoJS.AES.decrypt(pAge, patientKey);
+          const sigByte = CryptoJS.AES.decrypt(pSig, patientKey);
 
           // DECRYPT EL RAGEL
 
@@ -255,6 +253,23 @@ App = {
             var heightDec = heightByte.toString(CryptoJS.enc.Utf8);
             var weightDec = weightByte.toString(CryptoJS.enc.Utf8);
             var ageDec = ageByte.toString(CryptoJS.enc.Utf8);
+            var sigDec = sigByte.toString(CryptoJS.enc.Utf8);
+
+
+            message = nameDec+heightDec+weightDec+ageDec
+
+            console.log("hash is good", message)
+            console.log("hash is good", sign(message))
+            console.log("hash is good", sigDec)
+
+            if(sign(message) == sigDec){
+              console.log("Hash Match")
+            }
+            else{
+              // InshaAllah mnd5olsh hena hahaha
+              window.alert("No Hash Match")
+            }
+
           }catch(e){
             window.alert("Coudln't retrieve data")
             window.location.reload()
@@ -283,6 +298,7 @@ App = {
           const pulseByte = CryptoJS.AES.decrypt(pHeight_Pulse, patientKey);
           const glucoseByte = CryptoJS.AES.decrypt(pWeight_Glucose, patientKey);
           const ageByte = CryptoJS.AES.decrypt(pAge, patientKey);
+          const sigByte = CryptoJS.AES.decrypt(pSig, patientKey);
 
           // DECRYPT EL RAGEL
           // var bloodPressureDec = null
@@ -294,6 +310,22 @@ App = {
             var pulseDec = pulseByte.toString(CryptoJS.enc.Utf8);
             var glucoseDec = glucoseByte.toString(CryptoJS.enc.Utf8);
             var ageDec = ageByte.toString(CryptoJS.enc.Utf8);
+            var sigDec = sigByte.toString(CryptoJS.enc.Utf8);
+
+            message = bloodPressureDec+pulseDec+glucoseDec+ageDec
+
+            console.log("hash is good", message)
+            console.log("hash is good", sign(message))
+            console.log("hash is good", sigDec)
+
+            if(sign(message) == sigDec){
+              console.log("Hash Match")
+            }
+            else{
+              // InshaAllah mnd5olsh hena hahaha
+              window.alert("No Hash Match")
+            }
+
           }catch(e){
             console.log("bttsya kbeera")
             window.alert("Couldn't retrieve data")
@@ -363,7 +395,7 @@ App = {
         const pWeight = patRec[5]
         const pAge = patRec[6]
         const pBloodPressure = patRec[7]
-  
+        
         // Create the html for the task
         const $newPatientTemplate = $patientTemplate.clone()
         $newPatientTemplate.find('.pID').html(pID)
@@ -404,4 +436,7 @@ App = {
       App.load()
     })
   })
+  
+
+
   

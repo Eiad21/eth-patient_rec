@@ -25,7 +25,10 @@
   "dependencies": {
     "bower": "^1.8.14",
     "crypto-js": "^4.1.1",
+    "encrypt-rsa": "^2.1.2",
     "node-cryptojs-aes": "^0.4.0",
+    "node-rsa": "^1.1.1",
+    "requirejs": "^2.3.6",
     "validator": "^13.7.0",
     "web3": "^0.20.6"
   }

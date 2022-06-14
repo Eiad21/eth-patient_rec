@@ -15,6 +15,7 @@ contract PatientLedger{
         string height_pulse;
         string weight_glucose;
         string age;
+        string myHash;
     }
 
 
@@ -36,12 +37,12 @@ contract PatientLedger{
 
     function createRecord(uint _patientId, uint _myPrevRecord, 
     string memory _name_bloodPressure, string memory _height_pulse,
-    string memory _weight_glucose, string memory _age)  
+    string memory _weight_glucose, string memory _age, string memory _myHash)  
     public {
         
         infoCount++;
         patientRecords[infoCount] = PatientRecord(_patientId, _myPrevRecord, 
-        _name_bloodPressure, _height_pulse, _weight_glucose, _age);
+        _name_bloodPressure, _height_pulse, _weight_glucose, _age, _myHash);
 
         // emit TaskCreated(taskCount, _content, false);
     }
